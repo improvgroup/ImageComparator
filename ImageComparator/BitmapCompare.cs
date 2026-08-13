@@ -211,17 +211,17 @@ public class BitmapCompare : IBitmapCompare
             unsafe
             {
                 var p = (byte*)(void*)ptr;
-                var width = source.Width * 3;
-                var offset = bmpData.Stride - width;
+                var rowLength = source.Width * 3;
+                var offset = bmpData.Stride - rowLength;
 
                 for (var y = 0; y < source.Height; ++y)
                 {
-                    for (var x = 0; x < width; ++x)
+                    for (var x = 0; x < source.Width; ++x)
                     {
-                        data.R += p[0];
+                        data.B += p[0];
                         data.G += p[1];
-                        data.B += p[2];
-                        ++p;
+                        data.R += p[2];
+                        p += 3;
                     }
 
                     p += offset;
