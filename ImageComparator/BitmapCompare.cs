@@ -5,7 +5,7 @@ using System.Drawing.Imaging;
 using System.Numerics;
 using System.Runtime.Versioning;
 
-/// <summary>Compares two bitmaps by their dominant colour channel average.</summary>
+/// <summary>Compares two bitmaps using a configurable image-comparison strategy.</summary>
 [SupportedOSPlatform("windows")]
 public class BitmapCompare : IBitmapCompare
 {
