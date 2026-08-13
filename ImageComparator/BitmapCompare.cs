@@ -74,8 +74,8 @@ public class BitmapCompare : IBitmapCompare
         var dataA = ProcessBitmap(normalizedA);
         var dataB = ProcessBitmap(normalizedB);
 
-        var maxA = (normalizedA.Width * 3) * normalizedA.Height;
-        var maxB = (normalizedB.Width * 3) * normalizedB.Height;
+        var maxA = (long)normalizedA.Width * 3 * normalizedA.Height;
+        var maxB = (long)normalizedB.Width * 3 * normalizedB.Height;
 
         double result = dataA.GetLargest() switch
         {
@@ -240,13 +240,13 @@ public class BitmapCompare : IBitmapCompare
     public struct RGBData : IEquatable<RGBData>
     {
         /// <summary>Gets or sets the summed red channel value.</summary>
-        public int R { get; set; }
+        public long R { get; set; }
 
         /// <summary>Gets or sets the summed green channel value.</summary>
-        public int G { get; set; }
+        public long G { get; set; }
 
         /// <summary>Gets or sets the summed blue channel value.</summary>
-        public int B { get; set; }
+        public long B { get; set; }
 
         /// <summary>Returns which channel (1=R, 2=G, 3=B) has the largest sum.</summary>
         public readonly int GetLargest() =>
