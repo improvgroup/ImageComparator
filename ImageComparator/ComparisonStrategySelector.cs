@@ -10,8 +10,8 @@ public static class ComparisonStrategySelector
     /// <summary>Returns the strategy best suited for the provided images.</summary>
     public static ComparisonStrategy SelectBest(Bitmap a, Bitmap b)
     {
-        var maxPixels = Math.Max(a.Width * a.Height, b.Width * b.Height);
-        if (maxPixels >= 1920 * 1080)
+        var maxPixels = Math.Max((long)a.Width * a.Height, (long)b.Width * b.Height);
+        if (maxPixels >= 1920L * 1080)
         {
             return ComparisonStrategy.DifferenceHash;
         }
