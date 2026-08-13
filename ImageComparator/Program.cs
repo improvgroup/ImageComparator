@@ -1,218 +1,145 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Program.cs" company="">
-//   
-// </copyright>
-// <summary>
-//   The program.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
+namespace ImageComparator;
 
-namespace ImageComparator
+using System.Drawing;
+using System.Runtime.Versioning;
+
+[SupportedOSPlatform("windows")]
+internal static class Program
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Drawing;
-    using System.IO;
-    using System.Linq;
-    using System.Threading;
-
-    using WebApp.Services;
-
-    /// <summary>
-    /// The program.
-    /// </summary>
-    internal class Program
+    private static void Main(string[] args)
     {
-        /// <summary>
-        /// The simple compare.
-        /// </summary>
-        private static BitmapCompare simpleCompare;
+        var endDate = new DateTime(2010, 4, 2, 20, 30, 0);
 
-        /// <summary>
-        /// The main.
-        /// </summary>
-        /// <param name="args">
-        /// The arguments.
-        /// </param>
-        private static void Main(string[] args)
+        string? goodDirectory;
+        string? badDirectory;
+        string fileType;
+
+        if (args.Length == 4)
         {
-            var endDate = new DateTime(2010, 4, 2, 20, 30, 0);
+            goodDirectory = string.IsNullOrEmpty(args[1]) ? string.Empty : args[1];
+            badDirectory = string.IsNullOrEmpty(args[2]) ? string.Empty : args[2];
+            fileType = string.IsNullOrEmpty(args[3]) ? "jpg" : args[3];
+        }
+        else
+        {
+            Console.WriteLine("Please input the source image directory (good images):");
+            goodDirectory = Console.ReadLine();
+            Console.WriteLine("Please input the destination image directory (incorrect images):");
+            badDirectory = Console.ReadLine();
+            fileType = "jpg";
+        }
 
-            string goodDirectory;
-            string badDirectory;
-            string fileType;
+        if (goodDirectory is null || badDirectory is null)
+        {
+            return;
+        }
 
-            if (args.Length == 4)
+        var badFiles = GetFiles(badDirectory, fileType);
+        if (badFiles is null)
+        {
+            return;
+        }
+
+        var processed = new List<string>();
+
+        foreach (var goodFile in GetFiles(goodDirectory, fileType) ?? [])
+        {
+            Console.Write("{0}", goodFile);
+
+            if (badFiles.Contains(goodFile))
             {
-                goodDirectory = string.IsNullOrEmpty(args[1]) ? string.Empty : args[1];
-                badDirectory = string.IsNullOrEmpty(args[2]) ? string.Empty : args[2];
-                fileType = string.IsNullOrEmpty(args[3]) ? "jpg" : args[3];
+                badFiles.Remove(goodFile);
+                Console.WriteLine();
+                continue;
             }
-            else
-            {
-                Console.WriteLine("Please input the source image directory (good images) :");
-                goodDirectory = Console.ReadLine();
-                Console.WriteLine("Please input the destination image directory (incorrect images) :");
-                badDirectory = Console.ReadLine();
-                fileType = "jpg";
-            }
 
-            if (goodDirectory != null && badDirectory != null)
+            if (File.GetCreationTime(Path.Combine(badDirectory, goodFile)) <= endDate)
             {
-                var badFiles = GetFiles(badDirectory, fileType);
-                var processed = new List<string>();
-                foreach (var goodFile in GetFiles(goodDirectory, fileType))
+                foreach (var badFile in badFiles)
                 {
-                    Console.Write("{0}", goodFile);
-                    if (badFiles.Contains(goodFile))
+                    Console.Write(".");
+
+                    if (!DateCompare(Path.Combine(goodDirectory, goodFile), Path.Combine(badDirectory, badFile)))
                     {
-                        badFiles.Remove(goodFile);
-                        Console.WriteLine();
                         continue;
                     }
 
-                    if (File.GetCreationTime(Path.Combine(badDirectory, goodFile)) <= endDate)
+                    if (!ImageCompare(Path.Combine(goodDirectory, goodFile), Path.Combine(badDirectory, badFile)))
                     {
-                        foreach (var badFile in badFiles)
-                        {
-                            Console.Write(".");
-
-                            if (!DateCompare(Path.Combine(goodDirectory, goodFile), Path.Combine(badDirectory, badFile)))
-                            {
-                                continue;
-                            }
-
-                            if (
-                                !ImageCompare(
-                                    Path.Combine(goodDirectory, goodFile), 
-                                    Path.Combine(badDirectory, badFile)))
-                            {
-                                continue;
-                            }
-
-                            try
-                            {
-                                File.Copy(
-                                    Path.Combine(badDirectory, badFile), 
-                                    Path.Combine(badDirectory, goodFile), 
-                                    true);
-
-                                processed.Add(badFile);
-                                Console.WriteLine("\r\n{0} --> {1}", badFile, goodFile);
-                                break;
-                            }
-                            catch (IOException)
-                            {
-                            }
-                        }
+                        continue;
                     }
 
-                    Console.WriteLine();
-
-                    foreach (var badFile in processed)
+                    try
                     {
-                        try
-                        {
-                            // File.Delete(Path.Combine(badDirectory, badFile));
-                            if (badFiles.Contains(badFile))
-                            {
-                                badFiles.Remove(badFile);
-                            }
-
-                            // Console.WriteLine("Removed {0}", badFile);
-                        }
-                        catch (IOException)
-                        {
-                            Thread.Sleep(TimeSpan.FromSeconds(10));
-                        }
+                        File.Copy(Path.Combine(badDirectory, badFile), Path.Combine(badDirectory, goodFile), true);
+                        processed.Add(badFile);
+                        Console.WriteLine("\r\n{0} --> {1}", badFile, goodFile);
+                        break;
                     }
-                }
-
-                try
-                {
-                    using (var file = new StreamWriter(Path.Combine(badDirectory, "processed.txt"), true))
+                    catch (IOException)
                     {
-                        foreach (var f in processed)
-                        {
-                            file.WriteLine(f);
-                        }
                     }
-                }
-                catch (IOException)
-                {
                 }
             }
 
             Console.WriteLine();
-            Console.WriteLine("Complete");
-            Console.ReadLine();
-            Console.ReadLine();
-        }
 
-        /// <summary>
-        /// The get files.
-        /// </summary>
-        /// <param name="directory">
-        /// The <paramref name="directory"/>.
-        /// </param>
-        /// <param name="filetype">
-        /// The <paramref name="filetype"/>.
-        /// </param>
-        /// <returns>
-        /// The list.
-        /// </returns>
-        private static List<string> GetFiles(string directory, string filetype)
-        {
-            var di = new DirectoryInfo(directory);
-            try
+            foreach (var badFile in processed)
             {
-                var files = di.GetFiles(string.Format("*.{0}", filetype));
-
-                return files.Select(fi => fi.Name).ToList();
-            }
-            catch (DirectoryNotFoundException)
-            {
-                Console.WriteLine("Bad directory specified");
-                return null;
+                if (badFiles.Contains(badFile))
+                {
+                    badFiles.Remove(badFile);
+                }
             }
         }
 
-        /// <summary>
-        /// The image compare.
-        /// </summary>
-        /// <param name="firstImagePath">The first image path.</param>
-        /// <param name="secondImagePath">The second image path.</param>
-        /// <returns>The <see cref="bool" />.</returns>
-        private static bool ImageCompare(string firstImagePath, string secondImagePath)
+        try
         {
-            simpleCompare = new BitmapCompare();
-            double sim;
-            using (var comImage = new Bitmap(firstImagePath))
-            using (
-                var fileBitmap =
-                    new Bitmap(
-                        ThumbnailGenerator.GetThumbnailFromFile(secondImagePath, comImage.Width, comImage.Height, true, true)))
+            using var file = new StreamWriter(Path.Combine(badDirectory, "processed.txt"), append: true);
+            foreach (var f in processed)
             {
-                sim = simpleCompare.GetSimilarity(comImage, fileBitmap);
+                file.WriteLine(f);
             }
-
-            return Math.Round(sim, 3) > 0.75;
         }
-
-        /// <summary>
-        /// The date compare.
-        /// </summary>
-        /// <param name="firstImagePath">The first image path.</param>
-        /// <param name="secondImagePath">The second image path.</param>
-        /// <returns>The <see cref="bool" />.</returns>
-        private static bool DateCompare(string firstImagePath, string secondImagePath)
+        catch (IOException)
         {
-            var creationDate1 = File.GetCreationTime(firstImagePath);
-            var creationDate2 = File.GetCreationTime(secondImagePath);
-            var creationDate2Min = creationDate2.Subtract(TimeSpan.FromMinutes(5));
-            var creationDate2Max = creationDate2.AddMinutes(5);
-
-            return creationDate1 >= creationDate2Min && creationDate1 <= creationDate2Max;
         }
+
+        Console.WriteLine();
+        Console.WriteLine("Complete");
+        Console.ReadLine();
+    }
+
+    private static List<string>? GetFiles(string directory, string filetype)
+    {
+        var di = new DirectoryInfo(directory);
+        try
+        {
+            return di.GetFiles($"*.{filetype}").Select(fi => fi.Name).ToList();
+        }
+        catch (DirectoryNotFoundException)
+        {
+            Console.WriteLine("Bad directory specified");
+            return null;
+        }
+    }
+
+    private static bool ImageCompare(string firstImagePath, string secondImagePath)
+    {
+        var comparer = new BitmapCompare();
+        using var comImage = new Bitmap(firstImagePath);
+        using var fileBitmap = new Bitmap(
+            ThumbnailGenerator.GetThumbnailFromFile(secondImagePath, comImage.Width, comImage.Height, true, true));
+        var sim = comparer.GetSimilarity(comImage, fileBitmap);
+        return Math.Round(sim, 3) > 0.75;
+    }
+
+    private static bool DateCompare(string firstImagePath, string secondImagePath)
+    {
+        var creationDate1 = File.GetCreationTime(firstImagePath);
+        var creationDate2 = File.GetCreationTime(secondImagePath);
+        var creationDate2Min = creationDate2.Subtract(TimeSpan.FromMinutes(5));
+        var creationDate2Max = creationDate2.AddMinutes(5);
+        return creationDate1 >= creationDate2Min && creationDate1 <= creationDate2Max;
     }
 }
