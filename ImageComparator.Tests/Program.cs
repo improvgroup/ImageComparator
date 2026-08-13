@@ -17,8 +17,8 @@ public class BitmapCompareTests
             return;
         }
 
-        using var imageA = CreateSolidBitmap(Color.Red);
-        using var imageB = CreateSolidBitmap(Color.Red);
+        using var imageA = CreateSplitBitmap(Color.White, Color.Black);
+        using var imageB = CreateSplitBitmap(Color.White, Color.Black);
         using var imageC = CreateSolidBitmap(Color.Blue);
 
         var strategies = new[]
@@ -80,6 +80,17 @@ public class BitmapCompareTests
         var bitmap = new Bitmap(width, height);
         using var graphics = Graphics.FromImage(bitmap);
         graphics.Clear(color);
+        return bitmap;
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static Bitmap CreateSplitBitmap(Color leftColor, Color rightColor, int width = 64, int height = 64)
+    {
+        var bitmap = new Bitmap(width, height);
+        using var graphics = Graphics.FromImage(bitmap);
+        graphics.Clear(rightColor);
+        using var brush = new SolidBrush(leftColor);
+        graphics.FillRectangle(brush, 0, 0, width / 2, height);
         return bitmap;
     }
 
