@@ -19,13 +19,16 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "10.0.x"
 
       - name: Restore dependencies
         run: dotnet restore
 
       - name: Build
         run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests
+        run: dotnet run --no-build --configuration Release --project ImageComparator.Tests/ImageComparator.Tests.csproj
 
       - name: Publish (self-contained)
         run: dotnet publish --no-build --configuration Release --output publish
