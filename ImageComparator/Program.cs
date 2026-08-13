@@ -150,9 +150,17 @@ internal static class Program
 
             if (arg.StartsWith("--benchmark-iterations=", StringComparison.OrdinalIgnoreCase))
             {
-                benchmarkIterations = int.TryParse(arg.Split('=', 2)[1], out var parsed) && parsed > 0
-                    ? parsed
-                    : benchmarkIterations;
+                if (int.TryParse(arg.Split('=', 2)[1], out var parsed) && parsed > 0)
+                {
+                    benchmarkIterations = parsed;
+                }
+                else
+                {
+                    Console.WriteLine(
+                        "Invalid --benchmark-iterations value; using default of {0}.",
+                        benchmarkIterations);
+                }
+
                 continue;
             }
 
@@ -163,20 +171,17 @@ internal static class Program
         string? badDirectory = null;
         var fileType = "jpg";
 
-        if (nonOptionArguments.Count == 4)
-        {
-            // Preserve compatibility with the original argument style.
-            goodDirectory = nonOptionArguments[1];
-            badDirectory = nonOptionArguments[2];
-            fileType = string.IsNullOrWhiteSpace(nonOptionArguments[3]) ? "jpg" : nonOptionArguments[3];
-        }
-        else if (nonOptionArguments.Count >= 2)
+        if (nonOptionArguments.Count >= 2)
         {
             goodDirectory = nonOptionArguments[0];
             badDirectory = nonOptionArguments[1];
             fileType = nonOptionArguments.Count >= 3 && !string.IsNullOrWhiteSpace(nonOptionArguments[2])
                 ? nonOptionArguments[2]
                 : "jpg";
+        }
+        else if (nonOptionArguments.Count == 1)
+        {
+            goodDirectory = nonOptionArguments[0];
         }
 
         return new CommandLineOptions(goodDirectory, badDirectory, fileType, strategy, benchmark, benchmarkIterations);
@@ -186,7 +191,6 @@ internal static class Program
     {
         "legacy" => ComparisonStrategy.LegacyDominantChannel,
         "mad" => ComparisonStrategy.MeanAbsoluteDifference,
-        "mean" => ComparisonStrategy.MeanAbsoluteDifference,
         "dhash" => ComparisonStrategy.DifferenceHash,
         "auto" => ComparisonStrategy.Auto,
         _ => ComparisonStrategy.Auto,

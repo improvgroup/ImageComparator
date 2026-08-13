@@ -105,16 +105,44 @@ public class BitmapCompare : IBitmapCompare
         double totalDiff = 0;
         const double maxDiffPerPixel = 255 * 3;
 
-        for (var y = 0; y < targetHeight; y++)
+        var dataA = normalizedA.LockBits(
+            new Rectangle(0, 0, targetWidth, targetHeight),
+            ImageLockMode.ReadOnly,
+            PixelFormat.Format24bppRgb);
+
+        var dataB = normalizedB.LockBits(
+            new Rectangle(0, 0, targetWidth, targetHeight),
+            ImageLockMode.ReadOnly,
+            PixelFormat.Format24bppRgb);
+
+        try
         {
-            for (var x = 0; x < targetWidth; x++)
+            unsafe
             {
-                var colorA = normalizedA.GetPixel(x, y);
-                var colorB = normalizedB.GetPixel(x, y);
-                totalDiff += Math.Abs(colorA.R - colorB.R);
-                totalDiff += Math.Abs(colorA.G - colorB.G);
-                totalDiff += Math.Abs(colorA.B - colorB.B);
+                var ptrA = (byte*)(void*)dataA.Scan0;
+                var ptrB = (byte*)(void*)dataB.Scan0;
+                var rowLength = targetWidth * 3;
+                var offsetA = dataA.Stride - rowLength;
+                var offsetB = dataB.Stride - rowLength;
+
+                for (var y = 0; y < targetHeight; y++)
+                {
+                    for (var x = 0; x < rowLength; x++)
+                    {
+                        totalDiff += Math.Abs(ptrA[0] - ptrB[0]);
+                        ptrA++;
+                        ptrB++;
+                    }
+
+                    ptrA += offsetA;
+                    ptrB += offsetB;
+                }
             }
+        }
+        finally
+        {
+            normalizedA.UnlockBits(dataA);
+            normalizedB.UnlockBits(dataB);
         }
 
         var averageDiff = totalDiff / (targetWidth * targetHeight);
@@ -178,27 +206,33 @@ public class BitmapCompare : IBitmapCompare
         var ptr = bmpData.Scan0;
         var data = new RGBData();
 
-        unsafe
+        try
         {
-            var p = (byte*)(void*)ptr;
-            var width = source.Width * 3;
-            var offset = bmpData.Stride - width;
-
-            for (var y = 0; y < source.Height; ++y)
+            unsafe
             {
-                for (var x = 0; x < width; ++x)
-                {
-                    data.R += p[0];
-                    data.G += p[1];
-                    data.B += p[2];
-                    ++p;
-                }
+                var p = (byte*)(void*)ptr;
+                var width = source.Width * 3;
+                var offset = bmpData.Stride - width;
 
-                p += offset;
+                for (var y = 0; y < source.Height; ++y)
+                {
+                    for (var x = 0; x < width; ++x)
+                    {
+                        data.R += p[0];
+                        data.G += p[1];
+                        data.B += p[2];
+                        ++p;
+                    }
+
+                    p += offset;
+                }
             }
         }
+        finally
+        {
+            source.UnlockBits(bmpData);
+        }
 
-        source.UnlockBits(bmpData);
         return data;
     }
 

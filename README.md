@@ -15,7 +15,7 @@ The comparer now supports multiple strategies:
 ## Usage
 
 ```bash
-dotnet run --project /home/runner/work/ImageComparator/ImageComparator/ImageComparator/ImageComparator.csproj -- <goodDir> <badDir> [fileType] [--strategy=auto|legacy|mad|dhash] [--benchmark] [--benchmark-iterations=25]
+dotnet run --project ImageComparator/ImageComparator.csproj -- <goodDir> <badDir> [fileType] [--strategy=auto|legacy|mad|dhash] [--benchmark] [--benchmark-iterations=25]
 ```
 
 When `--benchmark` is enabled, the app prints per-strategy timing and similarity output for the first compared image pair.
@@ -25,5 +25,5 @@ When `--benchmark` is enabled, the app prints per-strategy timing and similarity
 Run:
 
 ```bash
-dotnet run --project /home/runner/work/ImageComparator/ImageComparator/ImageComparator.Tests/ImageComparator.Tests.csproj
+dotnet run --project ImageComparator.Tests/ImageComparator.Tests.csproj
 ```

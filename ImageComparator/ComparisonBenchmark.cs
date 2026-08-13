@@ -45,6 +45,7 @@ public static class ComparisonBenchmark
         foreach (var strategy in strategies)
         {
             var comparer = new BitmapCompare(strategy);
+            _ = comparer.GetSimilarity(a, b);
             double similarityTotal = 0;
 
             var sw = Stopwatch.StartNew();
@@ -74,4 +75,3 @@ public sealed record ComparisonBenchmarkResult(
     ComparisonStrategy Strategy,
     double AverageSimilarity,
     double AverageMillisecondsPerComparison);
-
