@@ -136,8 +136,14 @@ internal static class Program
                 continue;
             }
 
-            if (arg.Equals("--strategy", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+            if (arg.Equals("--strategy", StringComparison.OrdinalIgnoreCase))
             {
+                if (i + 1 >= args.Length)
+                {
+                    Console.WriteLine("Missing value for --strategy; using default of auto.");
+                    continue;
+                }
+
                 strategy = ParseStrategy(args[++i]);
                 continue;
             }
