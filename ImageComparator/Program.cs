@@ -193,14 +193,24 @@ internal static class Program
         return new CommandLineOptions(goodDirectory, badDirectory, fileType, strategy, benchmark, benchmarkIterations);
     }
 
-    private static ComparisonStrategy ParseStrategy(string value) => value.ToLowerInvariant() switch
+    private static ComparisonStrategy ParseStrategy(string value)
     {
-        "legacy" => ComparisonStrategy.LegacyDominantChannel,
-        "mad" => ComparisonStrategy.MeanAbsoluteDifference,
-        "dhash" => ComparisonStrategy.DifferenceHash,
-        "auto" => ComparisonStrategy.Auto,
-        _ => ComparisonStrategy.Auto,
-    };
+        var normalized = value.Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "legacy" => ComparisonStrategy.LegacyDominantChannel,
+            "mad" => ComparisonStrategy.MeanAbsoluteDifference,
+            "dhash" => ComparisonStrategy.DifferenceHash,
+            "auto" => ComparisonStrategy.Auto,
+            _ => Invalid(),
+        };
+
+        ComparisonStrategy Invalid()
+        {
+            Console.WriteLine("Invalid --strategy value '{0}'; using auto.", value);
+            return ComparisonStrategy.Auto;
+        }
+    }
 
     private static void PrintBenchmark(string firstImagePath, string secondImagePath, int iterations)
     {
