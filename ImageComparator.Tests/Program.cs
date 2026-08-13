@@ -3,58 +3,20 @@ namespace ImageComparator.Tests;
 using System.Drawing;
 using System.Runtime.Versioning;
 using ImageComparator;
+using TUnit.Core;
 
-[SupportedOSPlatform("windows")]
-internal static class Program
+public class BitmapCompareTests
 {
-    private static int Main()
+    [Test]
+    [SupportedOSPlatform("windows")]
+    public async Task StrategiesRankIdenticalAboveDifferent()
     {
-        if (!OperatingSystem.IsWindows())
+        if (!IsWindows())
         {
-            Console.WriteLine("Tests skipped: System.Drawing comparisons are Windows-only.");
-            return 0;
+            Skip.Test("System.Drawing comparisons are Windows-only.");
+            return;
         }
 
-        var tests = new (string Name, Action Execute)[]
-        {
-            ("Strategies rank identical above different", StrategiesRankIdenticalAboveDifferent),
-            ("Auto strategy picks dHash for very large images", AutoStrategyPicksDifferenceHashForLargeImages),
-            ("Benchmark returns concrete strategies", BenchmarkReturnsConcreteStrategies),
-        };
-
-        var failures = new List<string>();
-
-        foreach (var (name, execute) in tests)
-        {
-            try
-            {
-                execute();
-                Console.WriteLine($"PASS: {name}");
-            }
-            catch (Exception ex)
-            {
-                failures.Add($"{name}: {ex.Message}");
-                Console.WriteLine($"FAIL: {name}");
-            }
-        }
-
-        if (failures.Count == 0)
-        {
-            return 0;
-        }
-
-        Console.WriteLine();
-        Console.WriteLine("Failures:");
-        foreach (var failure in failures)
-        {
-            Console.WriteLine($"- {failure}");
-        }
-
-        return 1;
-    }
-
-    private static void StrategiesRankIdenticalAboveDifferent()
-    {
         using var imageA = CreateSolidBitmap(Color.Red);
         using var imageB = CreateSolidBitmap(Color.Red);
         using var imageC = CreateSolidBitmap(Color.Blue);
@@ -72,37 +34,47 @@ internal static class Program
             var sameSimilarity = comparer.GetSimilarity(imageA, imageB);
             var differentSimilarity = comparer.GetSimilarity(imageA, imageC);
 
-            AssertTrue(
-                sameSimilarity > differentSimilarity,
-                $"{strategy} expected sameSimilarity > differentSimilarity but was {sameSimilarity:F4} <= {differentSimilarity:F4}");
+            await Assert.That(sameSimilarity > differentSimilarity).IsTrue();
         }
     }
 
-    private static void AutoStrategyPicksDifferenceHashForLargeImages()
+    [Test]
+    [SupportedOSPlatform("windows")]
+    public async Task AutoStrategyPicksDifferenceHashForLargeImages()
     {
+        if (!IsWindows())
+        {
+            Skip.Test("System.Drawing comparisons are Windows-only.");
+            return;
+        }
         using var imageA = CreateSolidBitmap(Color.Green, width: 2400, height: 1600);
         using var imageB = CreateSolidBitmap(Color.Green, width: 2400, height: 1600);
         var comparer = new BitmapCompare(ComparisonStrategy.Auto);
 
         _ = comparer.GetSimilarity(imageA, imageB);
 
-        AssertTrue(
-            comparer.LastStrategyUsed == ComparisonStrategy.DifferenceHash,
-            $"Expected {ComparisonStrategy.DifferenceHash} but got {comparer.LastStrategyUsed}");
+        await Assert.That(comparer.LastStrategyUsed).IsEqualTo(ComparisonStrategy.DifferenceHash);
     }
 
-    private static void BenchmarkReturnsConcreteStrategies()
+    [Test]
+    [SupportedOSPlatform("windows")]
+    public async Task BenchmarkReturnsConcreteStrategies()
     {
+        if (!IsWindows())
+        {
+            Skip.Test("System.Drawing comparisons are Windows-only.");
+            return;
+        }
+
         using var imageA = CreateSolidBitmap(Color.White);
         using var imageB = CreateSolidBitmap(Color.Black);
         var results = ComparisonBenchmark.Run(imageA, imageB, iterations: 3);
 
-        AssertTrue(results.Count == 3, $"Expected 3 benchmark rows, got {results.Count}");
-        AssertTrue(
-            results.All(result => result.Strategy != ComparisonStrategy.Auto),
-            "Benchmark should return only concrete strategies.");
+        await Assert.That(results.Count).IsEqualTo(3);
+        await Assert.That(results.All(result => result.Strategy != ComparisonStrategy.Auto)).IsTrue();
     }
 
+    [SupportedOSPlatform("windows")]
     private static Bitmap CreateSolidBitmap(Color color, int width = 64, int height = 64)
     {
         var bitmap = new Bitmap(width, height);
@@ -111,11 +83,6 @@ internal static class Program
         return bitmap;
     }
 
-    private static void AssertTrue(bool condition, string message)
-    {
-        if (!condition)
-        {
-            throw new InvalidOperationException(message);
-        }
-    }
+    [SupportedOSPlatformGuard("windows")]
+    private static bool IsWindows() => OperatingSystem.IsWindows();
 }
