@@ -1,7 +1,7 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.22512.0
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageComparator", "ImageComparator\ImageComparator.csproj", "{04C06855-4D15-4E39-B460-257E4CC0B65A}"
 EndProject
@@ -18,8 +18,5 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(CodealikeProperties) = postSolution
-		SolutionGuid = b591c1b0-d954-44b2-9047-e14702b8e406
 	EndGlobalSection
 EndGlobal
